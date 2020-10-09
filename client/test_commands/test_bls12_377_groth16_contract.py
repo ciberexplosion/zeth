@@ -55,8 +55,12 @@ PROOF = Groth16.Proof.from_json_dict({
     ]
 })
 
-INPUTS = [
+INPUTS_VALID = [
     "0x0000000000000000000000000000000000000000000000000000000000000007"
+]
+
+INPUTS_INVALID = [
+    "0x0000000000000000000000000000000000000000000000000000000000000008"
 ]
 # pylint: enable=line-too-long
 
@@ -70,12 +74,18 @@ def _invoke_bls12_377_groth16_verify(
         vk, BLS12_377_PAIRING)
     proof_evm = Groth16.proof_to_contract_parameters(proof, BLS12_377_PAIRING)
     inputs_evm = hex_list_to_uint256_list(inputs)
-    return contract_instance.functions.test_verify(vk_evm, proof_evm, inputs_evm)
+    return contract_instance.functions.test_verify(
+        vk_evm, proof_evm, inputs_evm).call()
 
 
 def test_bls12_377_groth16_valid(contract_instance: Any) -> None:
     assert _invoke_bls12_377_groth16_verify(
-        contract_instance, VERIFICATION_KEY, PROOF, INPUTS)
+        contract_instance, VERIFICATION_KEY, PROOF, INPUTS_VALID)
+
+
+def test_bls12_377_groth16_invalid(contract_instance: Any) -> None:
+    assert not _invoke_bls12_377_groth16_verify(
+        contract_instance, VERIFICATION_KEY, PROOF, INPUTS_INVALID)
 
 
 def main() -> int:
@@ -92,6 +102,7 @@ def main() -> int:
     contract_instance = contract_instance_desc.instantiate(web3)
 
     test_bls12_377_groth16_valid(contract_instance)
+    test_bls12_377_groth16_invalid(contract_instance)
 
     print("========================================")
     print("==              PASSED                ==")
